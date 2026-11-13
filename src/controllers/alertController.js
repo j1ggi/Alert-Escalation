@@ -6,6 +6,11 @@ import {
   getAlertByIdService,
   resolveAlertService,
 } from "../services/alertService.js";
+import { runFleetSimulation } from "../services/simulationService.js";
+import {
+  getRecentNotifications,
+  getNotificationChannelsConfig,
+} from "../services/notificationService.js";
 
 const createAlert = asyncHandler(async (req, res) => {
   const alert = await createAlertService(req.body);
@@ -35,4 +40,30 @@ const resolveAlert = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, alert, "Alert resolved successfully"));
 });
 
-export { createAlert, getAlerts, getAlert, resolveAlert };
+const simulateFleet = asyncHandler(async (req, res) => {
+  const result = await runFleetSimulation(req.body);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result, "Fleet simulation executed successfully"));
+});
+
+const getNotifications = asyncHandler(async (req, res) => {
+  const notifications = getRecentNotifications();
+  const channels = getNotificationChannelsConfig();
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      { notifications, channels },
+      "Recent notifications retrieved successfully"
+    )
+  );
+});
+
+export {
+  createAlert,
+  getAlerts,
+  getAlert,
+  resolveAlert,
+  simulateFleet,
+  getNotifications,
+};

@@ -5,6 +5,8 @@ import CreateAlertForm from "./components/CreateAlertForm.js";
 import EscalatedAlerts from "./components/EscalatedAlerts.js";
 import RecentAlerts from "./components/RecentAlerts.js";
 import TopDrivers from "./components/TopDrivers.js";
+import FleetSimulator from "./components/FleetSimulator.js";
+import NotificationCenter from "./components/NotificationCenter.js";
 import "./styles.css";
 
 const BASE_URL = "http://localhost:5000/api/v1";
@@ -15,6 +17,8 @@ function App() {
     escalatedAlerts: [],
     recentAlerts: [],
     topDrivers: [],
+    recentNotifications: [],
+    notificationChannels: {},
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,6 +47,17 @@ function App() {
       await loadDashboard();
     } catch (err) {
       alert("Failed to create alert: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleRunSimulation = async () => {
+    try {
+      const res = await axios.post(`${BASE_URL}/alerts/simulate`, { eventCount: 7 });
+      await loadDashboard();
+      return res.data?.data;
+    } catch (err) {
+      alert("Simulation failed: " + (err.response?.data?.message || err.message));
+      throw err;
     }
   };
 
@@ -84,6 +99,13 @@ function App() {
       </div>
 
       <Summary metrics={dashboardData.metrics} />
+
+      <FleetSimulator onRunSimulation={handleRunSimulation} />
+
+      <NotificationCenter
+        notifications={dashboardData.recentNotifications}
+        channels={dashboardData.notificationChannels}
+      />
 
       <CreateAlertForm onCreateAlert={handleCreateAlert} />
 

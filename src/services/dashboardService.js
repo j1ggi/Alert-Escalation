@@ -1,6 +1,10 @@
 import Alert from "../models/Alert.js";
 import { getRedisClient } from "../config/redis.js";
 import logger from "../config/logger.js";
+import {
+  getRecentNotifications,
+  getNotificationChannelsConfig,
+} from "./notificationService.js";
 
 const CACHE_KEY = "dashboard:data";
 const CACHE_TTL = 300; // 5 minutes
@@ -14,7 +18,11 @@ export const getDashboardData = async () => {
       const cachedData = await redis.get(CACHE_KEY);
       if (cachedData) {
         logger.info("Retrieved dashboard metrics from Redis cache");
-        return JSON.parse(cachedData);
+        const parsed = JSON.parse(cachedData);
+        // Attach live notification history and channel config
+        parsed.recentNotifications = getRecentNotifications();
+        parsed.notificationChannels = getNotificationChannelsConfig();
+        return parsed;
       }
     } catch (err) {
       logger.warn(`Redis get failed: ${err.message}. Fetching from MongoDB directly.`);
@@ -53,6 +61,8 @@ export const getDashboardData = async () => {
     escalatedAlerts,
     recentAlerts,
     topDrivers,
+    recentNotifications: getRecentNotifications(),
+    notificationChannels: getNotificationChannelsConfig(),
   };
 
   // Cache result in Redis

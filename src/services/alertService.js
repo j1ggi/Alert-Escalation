@@ -2,6 +2,7 @@ import Alert, { SOURCE_TYPES } from "../models/Alert.js";
 import { ApiError } from "../utils/apiError.js";
 import { getRedisClient } from "../config/redis.js";
 import logger from "../config/logger.js";
+import { dispatchEscalationNotification } from "./notificationService.js";
 
 // Helper to invalidate Redis dashboard cache
 export const invalidateDashboardCache = async () => {
@@ -108,6 +109,14 @@ export const createAlertService = async (data) => {
 
   await alert.save();
   await invalidateDashboardCache();
+
+  // Dispatch multi-channel notifications (Slack / Discord / Webhook) upon critical escalation
+  if (alert.status === "ESCALATED") {
+    dispatchEscalationNotification(alert).catch((err) => {
+      logger.warn(`Failed to dispatch escalation notification: ${err.message}`);
+    });
+  }
+
   return alert;
 };
 
